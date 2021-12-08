@@ -12,6 +12,7 @@
 - 运行main.py
 
 ## 流程
+图文并茂流程：https://www.douban.com/note/821382787/
 1. 填写豆瓣用户id
 2. 填写豆瓣用户cookies
 3. 根据自身情况填写Integration token
