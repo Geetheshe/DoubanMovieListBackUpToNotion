@@ -66,11 +66,14 @@ class MovieList:
                     # 条目导演，多个导演需要拆分后获得字典
                     try:
                         movie_director = []
-                        directors = detail_soup.find("span", class_="attrs").get_text().split(" / ")
-                        for director in directors:
-                            director_dict = {}
-                            director_dict["name"] = director
-                            movie_director.append(director_dict)
+                        directors = detail_soup.find_all("a", rel="v:directedBy")
+                        if directors != []:
+                            for director in directors:
+                                director_dict = {}
+                                director_dict["name"] = director.get_text()
+                                movie_director.append(director_dict)
+                        else:
+                            movie_director = [{"name": "暂无导演信息"}]
                     except AttributeError:
                         movie_director = [{"name": "暂无导演信息"}]
 
