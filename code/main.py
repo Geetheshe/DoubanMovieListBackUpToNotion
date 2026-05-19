@@ -1,5 +1,6 @@
 from DoubanSpider import *
 from UploadToNotionDatabase import *
+from http.cookies import SimpleCookie
 
 
 def main():
@@ -27,7 +28,8 @@ def main():
     if choice == 1:
         database_id, start_number, end_number = first_or_not(token=token)
 
-        watched_to_notion = MovieList(user_cookies=user_cookies, database_id=database_id, status="看过", token=token)
+        watched_to_notion = MovieList(
+            user_cookies=user_cookies, database_id=database_id, status="看过", token=token)
 
         while start_number <= end_number:
             watched_url = f"https://movie.douban.com/people/{user_id}/collect?start={start_number}&sort=time&rating=all&filter=all&mode=grid"
@@ -40,7 +42,8 @@ def main():
     elif choice == 2:
         database_id, start_number, end_number = first_or_not(token=token)
 
-        watched_to_notion = MovieList(user_cookies=user_cookies, database_id=database_id, status="正在看", token=token)
+        watched_to_notion = MovieList(
+            user_cookies=user_cookies, database_id=database_id, status="正在看", token=token)
 
         while start_number <= end_number:
             watched_url = f"https://movie.douban.com/people/{user_id}/do?start={start_number}&sort=time&rating=all&filter=all&mode=grid"
@@ -53,7 +56,8 @@ def main():
     elif choice == 3:
         database_id, start_number, end_number = first_or_not(token=token)
 
-        watched_to_notion = MovieList(user_cookies=user_cookies, database_id=database_id, status="想看", token=token)
+        watched_to_notion = MovieList(
+            user_cookies=user_cookies, database_id=database_id, status="想看", token=token)
 
         while start_number <= end_number:
             watched_url = f"https://movie.douban.com/people/{user_id}/wish?start={start_number}&sort=time&rating=all&filter=all&mode=grid"
@@ -119,18 +123,19 @@ def find_page_id():
         if notion_page_url.count("?v=") == 0:
             if notion_page_url.count("#") == 0:
                 page_id = notion_page_url[len(notion_page_url) - 32:len(notion_page_url) - 24] + '-' \
-                          + notion_page_url[len(notion_page_url) - 24:len(notion_page_url) - 20] + '-' \
-                          + notion_page_url[len(notion_page_url) - 20:len(notion_page_url) - 16] + '-' \
-                          + notion_page_url[len(notion_page_url) - 16:len(notion_page_url) - 12] + '-' \
-                          + notion_page_url[len(notion_page_url) - 12:len(notion_page_url)]
+                    + notion_page_url[len(notion_page_url) - 24:len(notion_page_url) - 20] + '-' \
+                    + notion_page_url[len(notion_page_url) - 20:len(notion_page_url) - 16] + '-' \
+                    + notion_page_url[len(notion_page_url) - 16:len(notion_page_url) - 12] + '-' \
+                    + notion_page_url[len(notion_page_url) -
+                                      12:len(notion_page_url)]
                 return page_id
             elif notion_page_url.count("#") != 0:
                 last_hash = notion_page_url.index("#")
                 page_id = notion_page_url[last_hash - 32:last_hash - 24] + "-" \
-                          + notion_page_url[last_hash - 24:last_hash - 20] + "-" \
-                          + notion_page_url[last_hash - 20:last_hash - 16] + "-" \
-                          + notion_page_url[last_hash - 16:last_hash - 12] + "-" \
-                          + notion_page_url[last_hash - 12:last_hash]
+                    + notion_page_url[last_hash - 24:last_hash - 20] + "-" \
+                    + notion_page_url[last_hash - 20:last_hash - 16] + "-" \
+                    + notion_page_url[last_hash - 16:last_hash - 12] + "-" \
+                    + notion_page_url[last_hash - 12:last_hash]
                 return page_id
         elif notion_page_url.count("?v=") != 0:
             print("----------------------------------------------------\n"
@@ -192,16 +197,31 @@ def try_to_find_database_id():
 def add_cookies():
     cookies_str = input('----------------------------------------------------\n'
                         '请输入你的豆瓣cookies:')
-    if cookies_str[0:3] == "ll=":
-        cookies_dict = {}
-        cookies_list = cookies_str.replace('"', "").split('; ')
-        for i in cookies_list:
-            name, value = i.split('=', 1)
-            cookies_dict[f'{name}'] = value
-        return cookies_dict
-    else:
+
+    cookies_str = cookies_str.strip()
+
+    # 兼容用户把“cookies:”/“cookie:”一起复制进来的情况
+    lower_cookies = cookies_str.lower()
+    for prefix in ("cookies:", "cookie:", "cookies =", "cookie =", "cookies=", "cookie=", "cookies：", "cookie："):
+        if lower_cookies.startswith(prefix):
+            cookies_str = cookies_str[len(prefix):].strip()
+            break
+
+    cookie = SimpleCookie()
+
+    try:
+        cookie.load(cookies_str)
+    except Exception:
         print("你输入的豆瓣cookies可能有误，请再重新试试吧！")
-        add_cookies()
+        return add_cookies()
+
+    cookies_dict = {key: morsel.value for key, morsel in cookie.items()}
+
+    if not cookies_dict:
+        print("你输入的豆瓣cookies可能有误，请再重新试试吧！")
+        return add_cookies()
+
+    return cookies_dict
 
 
 if __name__ == "__main__":
